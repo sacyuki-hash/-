@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Brain, Compass, Sparkles, ShieldAlert, ArrowRight, Quote, Check, Copy } from 'lucide-react';
+import { Copy, Check } from 'lucide-react';
 import { ElixenceMarketingBrain } from '../types/adDiagnosis';
 
 interface MarketingBrainCardProps {
@@ -19,89 +19,86 @@ export const MarketingBrainCard: React.FC<MarketingBrainCardProps> = ({ brain, w
   };
 
   return (
-    <div className="relative overflow-hidden rounded-2xl border border-[#d4af37]/30 bg-gradient-to-b from-[#161821] via-[#10121a] to-[#0c0d14] p-6 sm:p-8 shadow-2xl">
-      {/* Decorative subtle ambient gold ray */}
-      <div className="pointer-events-none absolute -right-16 -top-16 h-64 w-64 rounded-full bg-[#d4af37]/10 blur-3xl" />
-      <div className="pointer-events-none absolute -left-16 bottom-0 h-48 w-48 rounded-full bg-[#8a7024]/10 blur-3xl" />
-
+    <section className="bg-white border border-[#e9e9e9] rounded-lg p-6 sm:p-10 lg:p-12 shadow-xs space-y-8">
       {/* Header kicker */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/[0.08] pb-5">
-        <div>
-          <div className="flex items-center gap-2 text-xs font-semibold tracking-wider text-[#d4af37]">
-            <Brain className="w-4 h-4 text-[#d4af37]" />
-            <span className="uppercase tracking-widest text-[11px]">ELIXENCE MARKETING BRAIN</span>
-            <span className="text-white/30">·</span>
-            <span className="text-white/60">横山ユウキ式 成約心理・構造看破</span>
-          </div>
-          <h3 className="font-serif-luxury text-xl sm:text-2xl font-bold text-white mt-1 tracking-wide">
-            広告の美意識とコンバージョン（CVR）の統合診断
+      <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-3 border-b border-[#e9e9e9] pb-5">
+        <div className="flex items-center gap-3">
+          <span className="font-serif-luxury text-sm font-bold tracking-[0.2em] text-[#9e7d23] uppercase">
+            MARKETING BRAIN AUDIT
+          </span>
+          <span className="text-[#cccccc]">/</span>
+          <h3 className="text-xl sm:text-2xl font-bold text-[#111111]">
+            美意識と成約力（CVR）の統合診断
           </h3>
         </div>
-
-        <div className="inline-flex items-center gap-2 text-xs font-medium text-white/50 bg-white/[0.03] border border-white/[0.06] px-3.5 py-1.5 rounded-full">
-          <span>美意識とDRMの融合</span>
-          <span className="text-white/20">/</span>
-          <span className="text-[#d4af37]">高単価成約</span>
+        <div className="text-sm font-medium text-[#666666]">
+          <span>判定方向性: </span>
+          <strong className="text-[#111111] font-bold">{winningAngle || '高単価成約型リデザイン'}</strong>
         </div>
       </div>
 
       {/* Executive Verdict Quote Box */}
-      <div className="my-6 relative rounded-xl border border-[#d4af37]/40 bg-gradient-to-r from-[#211d14]/70 via-[#181611]/80 to-[#211d14]/70 p-5 sm:p-6 shadow-lg">
-        <div className="flex items-start gap-3.5">
-          <Quote className="w-6 h-6 text-[#d4af37] shrink-0 mt-0.5 opacity-80" />
-          <div className="space-y-1.5 flex-1">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-[#d4af37]/90">
-              横山ユウキ直伝 エグゼクティブ・バーディクト
+      <div className="border-l-3 border-[#111111] pl-6 sm:pl-8 py-2 relative">
+        <div className="flex items-start justify-between gap-6">
+          <div className="space-y-2">
+            <span className="text-xs font-serif-luxury text-[#9e7d23] font-bold tracking-widest uppercase">
+              EXECUTIVE VERDICT — 核心総評
             </span>
-            <p className="font-serif-luxury text-base sm:text-lg text-[#fff9e6] font-semibold leading-relaxed tracking-wide">
+            <p className="font-serif-luxury text-2xl sm:text-3xl text-[#111111] font-bold leading-relaxed">
               “{brain.executive_verdict}”
             </p>
           </div>
           <button
             onClick={handleCopyVerdict}
-            className="shrink-0 p-2 rounded-lg bg-white/[0.05] hover:bg-white/[0.1] text-white/60 hover:text-white transition-colors"
-            title="格言をコピー"
+            className="shrink-0 p-2.5 rounded-md border border-[#e9e9e9] hover:border-[#111111] bg-white hover:bg-[#111111] hover:text-white text-[#333333] transition-all cursor-pointer shadow-2xs"
+            title="総評をコピー"
           >
-            {copied ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
+            {copied ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4" />}
           </button>
         </div>
       </div>
 
       {/* 3 Pillar Strategic Analysis */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-1">
-        {/* Pillar 1: Brand vs Response Gap */}
-        <div className="rounded-xl border border-white/[0.07] bg-white/[0.02] p-4 sm:p-5 space-y-2 hover:border-[#d4af37]/30 transition-colors">
-          <div className="flex items-center gap-2 text-xs font-semibold text-[#f7df94]">
-            <Compass className="w-4 h-4 text-[#d4af37]" />
-            <span>01. ブランド感と反応獲得の乖離</span>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-2">
+        {/* Pillar 1 */}
+        <div className="p-6 rounded-md bg-[#fafafa] border border-[#e9e9e9] space-y-3">
+          <div className="text-xs font-serif-luxury text-[#9e7d23] font-bold tracking-wider uppercase">
+            PILLAR 01
           </div>
-          <p className="text-xs text-white/70 leading-relaxed font-sans">
+          <h4 className="text-lg font-bold text-[#111111]">
+            ブランド感と反応獲得の乖離
+          </h4>
+          <p className="text-base text-[#444444] leading-relaxed">
             {brain.brand_vs_response_gap}
           </p>
         </div>
 
-        {/* Pillar 2: Psychological Barrier */}
-        <div className="rounded-xl border border-white/[0.07] bg-white/[0.02] p-4 sm:p-5 space-y-2 hover:border-[#d4af37]/30 transition-colors">
-          <div className="flex items-center gap-2 text-xs font-semibold text-rose-300">
-            <ShieldAlert className="w-4 h-4 text-rose-400" />
-            <span>02. 顧客の心理的障壁・先送り理由</span>
+        {/* Pillar 2 */}
+        <div className="p-6 rounded-md bg-[#fafafa] border border-[#e9e9e9] space-y-3">
+          <div className="text-xs font-serif-luxury text-[#9e7d23] font-bold tracking-wider uppercase">
+            PILLAR 02
           </div>
-          <p className="text-xs text-white/70 leading-relaxed font-sans">
+          <h4 className="text-lg font-bold text-[#111111]">
+            顧客の心理的障壁・先送り理由
+          </h4>
+          <p className="text-base text-[#444444] leading-relaxed">
             {brain.psychological_barrier}
           </p>
         </div>
 
-        {/* Pillar 3: Conversion Architecture */}
-        <div className="rounded-xl border border-white/[0.07] bg-white/[0.02] p-4 sm:p-5 space-y-2 hover:border-[#d4af37]/30 transition-colors">
-          <div className="flex items-center gap-2 text-xs font-semibold text-emerald-300">
-            <Sparkles className="w-4 h-4 text-emerald-400" />
-            <span>03. Elixence式 成約アーキテクチャ</span>
+        {/* Pillar 3 */}
+        <div className="p-6 rounded-md bg-[#fafafa] border border-[#e9e9e9] space-y-3">
+          <div className="text-xs font-serif-luxury text-[#9e7d23] font-bold tracking-wider uppercase">
+            PILLAR 03
           </div>
-          <p className="text-xs text-white/70 leading-relaxed font-sans">
+          <h4 className="text-lg font-bold text-[#111111]">
+            Elixence式 成約アーキテクチャ
+          </h4>
+          <p className="text-base text-[#444444] leading-relaxed">
             {brain.conversion_architecture}
           </p>
         </div>
       </div>
-    </div>
+    </section>
   );
 };

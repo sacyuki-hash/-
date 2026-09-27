@@ -1,16 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import {
-  Sparkles,
   Zap,
-  LayoutTemplate,
   FileText,
   Braces,
   Download,
   Copy,
   Check,
   AlertCircle,
-  Brain,
   RefreshCw,
+  ExternalLink,
+  Sparkles,
 } from 'lucide-react';
 import { Header } from './components/Header';
 import { UploadSection } from './components/UploadSection';
@@ -21,7 +20,7 @@ import { ConceptsView } from './components/ConceptsView';
 import { CopyOfferCtaSection } from './components/CopyOfferCtaSection';
 import { ThreeSecondExplainerModal } from './components/ThreeSecondExplainerModal';
 import { AdDiagnosisResult, SupplementaryInfo } from './types/adDiagnosis';
-import { SAMPLE_PRESETS } from './utils/presets';
+import { analyzeAdClientSide } from './utils/geminiClient';
 
 export default function App() {
   const [image, setImage] = useState<{ data: string; mimeType: string; name?: string } | null>(null);
@@ -60,10 +59,10 @@ export default function App() {
     return () => clearInterval(timer);
   }, [rateLimitSeconds]);
 
-  // Trigger analysis call to server
+  // Client-side direct call to Gemini API
   const handleAnalyze = async () => {
     if (!image) {
-      setError('広告画像をアップロードするか、サンプルプリセットを選択してください。');
+      setError('広告画像をアップロードするか、事例プリセットを選択してください。');
       return;
     }
 
@@ -71,36 +70,23 @@ export default function App() {
     setError(null);
 
     try {
-      // 常に環境変数（import.meta.env.VITE_GEMINI_API_KEY）からAPIキーを読み込み
-      const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
-
-      const response = await fetch('/api/analyze-ad', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(apiKey ? { 'x-gemini-api-key': apiKey } : {}),
-        },
-        body: JSON.stringify({
-          image,
-          metadata,
-          apiKey: apiKey || undefined,
-        }),
+      // フロントエンド（React/Vite側）から直接 Gemini API を呼び出し
+      const diagnosisResult = await analyzeAdClientSide({
+        imageData: image.data,
+        mimeType: image.mimeType,
+        metadata,
       });
 
-      const json = await response.json();
-      if (!response.ok || !json.success) {
-        if (json.isRateLimit && json.retryAfter) {
-          setRateLimitSeconds(json.retryAfter);
-        }
-        throw new Error(json.error || '広告診断の実行に失敗しました。');
-      }
-
-      setResult(json.data);
+      setResult(diagnosisResult);
       setRateLimitSeconds(null);
-      setActiveTab('concepts'); // Switch to results
+      setActiveTab('concepts'); // Switch to prompt concepts tab
     } catch (err: any) {
-      console.error(err);
-      setError(err.message || '通信エラーが発生しました。もう一度お試しください。');
+      console.error('Analysis failed:', err);
+      const msg = err?.message || String(err);
+      if (msg.includes('Rate Limit') || msg.includes('429')) {
+        setRateLimitSeconds(35);
+      }
+      setError(msg || '通信エラーが発生しました。もう一度お試しください。');
     } finally {
       setIsAnalyzing(false);
     }
@@ -124,53 +110,33 @@ export default function App() {
     URL.revokeObjectURL(url);
   };
 
-  const handleSelectPresetFromHeader = (presetId: string) => {
-    const preset = SAMPLE_PRESETS.find((p) => p.id === presetId);
-    if (preset) {
-      setImage({
-        data: preset.imageDataUrl,
-        mimeType: 'image/svg+xml',
-        name: preset.imageTitle,
-      });
-      setMetadata(preset.metadata);
-    }
-  };
-
   return (
-    <div className="min-h-screen bg-[#08090d] text-[#e0e2ec] flex flex-col font-['Plus_Jakarta_Sans','Noto_Sans_JP',sans-serif]">
+    <div className="min-h-screen bg-white text-[#222222] flex flex-col font-['Plus_Jakarta_Sans','Noto_Sans_JP',sans-serif]">
       {/* Top Header */}
-      <Header
-        onOpenExplainerModal={() => setShowExplainerModal(true)}
-        onSelectPreset={handleSelectPresetFromHeader}
-      />
+      <Header onOpenExplainerModal={() => setShowExplainerModal(true)} />
 
       {/* Main Content Area */}
-      <main className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-10 space-y-10">
-        {/* Hero Section */}
-        <div className="text-center max-w-3xl mx-auto space-y-4">
-          <div className="inline-flex items-center gap-2.5 text-xs text-[#d4af37]">
-            <span className="font-serif-luxury tracking-widest font-semibold text-[13px]">
+      <main className="flex-1 max-w-7xl mx-auto w-full px-6 sm:px-8 lg:px-12 py-8 sm:py-14 space-y-12">
+        {/* Hero Section — Elixence Editorial Tone */}
+        <section className="py-4 sm:py-8 border-b border-[#e9e9e9] space-y-6">
+          <div className="max-w-4xl space-y-4">
+            <span className="font-serif-luxury text-sm font-bold tracking-[0.25em] text-[#9e7d23] uppercase block">
               ELIXENCE MARKETING INTELLIGENCE
             </span>
-            <span className="text-white/20">·</span>
-            <span className="text-white/60">美意識と成約力の極限融合</span>
+            <h1 className="font-serif-luxury text-4xl sm:text-6xl lg:text-7xl font-bold text-[#111111] tracking-tight leading-[1.15]">
+              仕組みで数字を。<br />
+              共鳴で心を。
+            </h1>
+            <p className="text-xl sm:text-2xl text-[#333333] font-serif-luxury leading-relaxed pt-1">
+              戦略はロジックで組み、共鳴はデザインで仕掛ける。
+            </p>
+            <p className="text-base sm:text-lg text-[#555555] leading-relaxed max-w-3xl">
+              安っぽい煽りチラシは店を殺し、ただ綺麗なだけのアート広告は売上を殺す——。
+              横山祐樹式マーケティング脳が、広告の心理障壁を「3秒ルール」で解体。
+              高単価店舗・サロンの品格を守りながら成約率を最大化するAI画像生成用プロンプトを、クライアントサイドで直接構築します。
+            </p>
           </div>
-
-          <h2 className="font-serif-luxury text-3xl sm:text-5xl font-bold text-white tracking-tight leading-[1.15]">
-            広告の美意識を研ぎ澄まし、
-            <br />
-            <span className="gold-gradient-text">
-              成約が鳴り止まないAIプロンプト
-            </span>
-            を生成
-          </h2>
-
-          <p className="text-xs sm:text-sm text-white/60 max-w-2xl mx-auto leading-relaxed font-sans">
-            「安っぽい煽りチラシは店を殺し、ただ綺麗なだけのアート広告は売上を殺す」——
-            横山ユウキ式マーケティング脳が、広告の心理障壁を3秒ルールで看破。
-            高単価店舗・サロンの品格を守りながら、予約・来店を最大化する3方向のAI画像生成プロンプトを出力します。
-          </p>
-        </div>
+        </section>
 
         {/* Upload & Setup Section */}
         <UploadSection
@@ -184,28 +150,33 @@ export default function App() {
 
         {/* Error notification */}
         {error && (
-          <div className="p-5 rounded-2xl bg-rose-950/40 border border-rose-500/40 text-rose-200 text-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 animate-in fade-in">
-            <div className="flex items-start gap-3">
-              <AlertCircle className="w-5 h-5 text-rose-400 shrink-0 mt-0.5" />
-              <div className="space-y-1">
-                <p className="font-semibold text-rose-100">{error}</p>
+          <div className="p-6 rounded-md bg-rose-50 border border-rose-300 text-rose-950 text-base flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5 shadow-xs">
+            <div className="flex items-start gap-4">
+              <AlertCircle className="w-6 h-6 text-rose-600 shrink-0 mt-0.5" />
+              <div className="space-y-1.5">
+                <p className="font-bold text-rose-900 text-base sm:text-lg">{error}</p>
                 {rateLimitSeconds !== null && rateLimitSeconds > 0 && (
-                  <p className="text-xs text-rose-300/80">
-                    レートリミット待機中: 約 <span className="font-bold text-[#d4af37]">{rateLimitSeconds}</span> 秒後に自動または手動で再試行可能です
+                  <p className="text-sm text-rose-700">
+                    レートリミット待機中: 約 <span className="font-bold">{rateLimitSeconds}</span> 秒後に再試行可能です
+                  </p>
+                )}
+                {!import.meta.env.VITE_GEMINI_API_KEY && (
+                  <p className="text-sm text-rose-800">
+                    ヒント: Netlify管理画面の「Site configuration &gt; Environment variables」にて、キー名「<code>VITE_GEMINI_API_KEY</code>」でGemini APIキーを登録し、再デプロイしてください。
                   </p>
                 )}
               </div>
             </div>
-            <div className="flex items-center gap-2 self-end sm:self-auto shrink-0">
+            <div className="flex items-center gap-3 self-end sm:self-auto shrink-0">
               <button
                 onClick={() => {
                   setError(null);
                   handleAnalyze();
                 }}
                 disabled={isAnalyzing}
-                className="text-xs font-semibold px-3 py-1.5 rounded-xl bg-[#d4af37] text-black hover:bg-[#e2c159] transition-all flex items-center gap-1.5 shadow-lg shadow-[#d4af37]/20"
+                className="text-sm font-bold px-4 py-2 rounded-md bg-[#111111] text-white hover:bg-[#252525] transition-all flex items-center gap-2 cursor-pointer"
               >
-                <RefreshCw className={`w-3.5 h-3.5 ${isAnalyzing ? 'animate-spin' : ''}`} />
+                <RefreshCw className={`w-4 h-4 ${isAnalyzing ? 'animate-spin' : ''}`} />
                 <span>{rateLimitSeconds ? `再試行 (${rateLimitSeconds}s)` : '再試行する'}</span>
               </button>
               <button
@@ -213,7 +184,7 @@ export default function App() {
                   setError(null);
                   setRateLimitSeconds(null);
                 }}
-                className="text-xs font-semibold px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-white/80 transition-colors"
+                className="text-sm font-bold px-4 py-2 rounded-md bg-white border border-[#d0d0d0] hover:bg-[#f0f0f0] text-[#333333] transition-colors cursor-pointer"
               >
                 閉じる
               </button>
@@ -223,18 +194,13 @@ export default function App() {
 
         {/* Loading State Animation */}
         {isAnalyzing && (
-          <div className="py-20 text-center space-y-5 rounded-3xl bg-[#10121a]/80 border border-[#d4af37]/25 shadow-2xl">
-            <div className="relative w-16 h-16 mx-auto">
-              <div className="w-16 h-16 border-2 border-[#d4af37]/20 border-t-[#d4af37] rounded-full animate-spin" />
-              <div className="absolute inset-0 flex items-center justify-center">
-                <Brain className="w-6 h-6 text-[#d4af37] animate-pulse" />
-              </div>
-            </div>
-            <div className="space-y-1.5">
-              <div className="font-serif-luxury text-lg font-bold text-white tracking-wide">
+          <div className="py-20 text-center space-y-6 rounded-md bg-white border border-[#e9e9e9] shadow-xs">
+            <div className="w-12 h-12 border-2 border-[#111111] border-t-transparent rounded-full animate-spin mx-auto" />
+            <div className="space-y-2">
+              <div className="font-serif-luxury text-2xl sm:text-3xl font-bold text-[#111111]">
                 Elixence マーケティング脳 診断中...
               </div>
-              <p className="text-xs text-white/50 max-w-md mx-auto leading-relaxed">
+              <p className="text-base text-[#666666] max-w-lg mx-auto leading-relaxed">
                 画像の文字・構造を認識 &rarr; 美意識と成約の乖離を解析 &rarr; 顧客心理障壁を解体 &rarr; 3方向の画像生成用完成プロンプトを構築中
               </p>
             </div>
@@ -243,7 +209,7 @@ export default function App() {
 
         {/* Results Area */}
         {result && !isAnalyzing && (
-          <div className="space-y-8 animate-in fade-in duration-300">
+          <div className="space-y-10 animate-in fade-in duration-300">
             {/* Elixence Marketing Brain Card */}
             <MarketingBrainCard
               brain={result.elixence_marketing_brain}
@@ -257,71 +223,67 @@ export default function App() {
             />
 
             {/* View Mode Navigation Tabs */}
-            <div className="flex flex-wrap items-center justify-between gap-4 border-b border-white/[0.08] pb-3">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#e9e9e9] pb-4">
               <div className="flex items-center gap-2 overflow-x-auto">
                 <button
                   onClick={() => setActiveTab('concepts')}
-                  className={`px-5 py-2.5 rounded-xl text-xs sm:text-sm font-serif-luxury font-bold flex items-center gap-2 transition-all ${
+                  className={`px-5 py-3 rounded-md text-sm sm:text-base font-bold transition-all cursor-pointer ${
                     activeTab === 'concepts'
-                      ? 'bg-gradient-to-r from-[#d4af37] to-[#f3d98c] text-[#0c0d12] shadow-lg shadow-[#d4af37]/15'
-                      : 'bg-white/[0.03] text-white/70 hover:text-white hover:bg-white/[0.06] border border-white/[0.08]'
+                      ? 'bg-[#111111] text-white shadow-xs'
+                      : 'bg-transparent text-[#666666] hover:text-[#111111] hover:bg-[#fafafa]'
                   }`}
                 >
-                  <Zap className="w-4 h-4" />
-                  <span>3方向の完成プロンプト</span>
+                  3方向の完成プロンプト
                 </button>
 
                 <button
                   onClick={() => setActiveTab('diagnosis')}
-                  className={`px-5 py-2.5 rounded-xl text-xs sm:text-sm font-serif-luxury font-bold flex items-center gap-2 transition-all ${
+                  className={`px-5 py-3 rounded-md text-sm sm:text-base font-bold transition-all cursor-pointer ${
                     activeTab === 'diagnosis'
-                      ? 'bg-gradient-to-r from-[#d4af37] to-[#f3d98c] text-[#0c0d12] shadow-lg shadow-[#d4af37]/15'
-                      : 'bg-white/[0.03] text-white/70 hover:text-white hover:bg-white/[0.06] border border-white/[0.08]'
+                      ? 'bg-[#111111] text-white shadow-xs'
+                      : 'bg-transparent text-[#666666] hover:text-[#111111] hover:bg-[#fafafa]'
                   }`}
                 >
-                  <FileText className="w-4 h-4" />
-                  <span>広告診断 ＆ ボトルネック</span>
+                  広告診断 ＆ ボトルネック
                 </button>
 
                 <button
                   onClick={() => setActiveTab('copy_offer')}
-                  className={`px-5 py-2.5 rounded-xl text-xs sm:text-sm font-serif-luxury font-bold flex items-center gap-2 transition-all ${
+                  className={`px-5 py-3 rounded-md text-sm sm:text-base font-bold transition-all cursor-pointer ${
                     activeTab === 'copy_offer'
-                      ? 'bg-gradient-to-r from-[#d4af37] to-[#f3d98c] text-[#0c0d12] shadow-lg shadow-[#d4af37]/15'
-                      : 'bg-white/[0.03] text-white/70 hover:text-white hover:bg-white/[0.06] border border-white/[0.08]'
+                      ? 'bg-[#111111] text-white shadow-xs'
+                      : 'bg-transparent text-[#666666] hover:text-[#111111] hover:bg-[#fafafa]'
                   }`}
                 >
-                  <Sparkles className="w-4 h-4" />
-                  <span>推奨コピー・オファー・CTA</span>
+                  推奨コピー・オファー・CTA
                 </button>
 
                 <button
                   onClick={() => setActiveTab('raw_json')}
-                  className={`px-5 py-2.5 rounded-xl text-xs sm:text-sm font-serif-luxury font-bold flex items-center gap-2 transition-all ${
+                  className={`px-5 py-3 rounded-md text-sm sm:text-base font-bold transition-all cursor-pointer ${
                     activeTab === 'raw_json'
-                      ? 'bg-gradient-to-r from-[#d4af37] to-[#f3d98c] text-[#0c0d12] shadow-lg shadow-[#d4af37]/15'
-                      : 'bg-white/[0.03] text-white/70 hover:text-white hover:bg-white/[0.06] border border-white/[0.08]'
+                      ? 'bg-[#111111] text-white shadow-xs'
+                      : 'bg-transparent text-[#666666] hover:text-[#111111] hover:bg-[#fafafa]'
                   }`}
                 >
-                  <Braces className="w-4 h-4" />
-                  <span>生JSON出力</span>
+                  生JSONデータ
                 </button>
               </div>
 
               {/* Actions */}
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-3">
                 <button
                   onClick={handleCopyJson}
-                  className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded-lg bg-white/[0.03] border border-white/[0.1] text-white/70 hover:text-white hover:bg-white/[0.08] transition-colors"
+                  className="flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-md bg-white border border-[#222222] text-[#222222] hover:bg-[#111111] hover:text-white transition-all cursor-pointer"
                 >
                   {copiedJson ? (
                     <>
-                      <Check className="w-3.5 h-3.5 text-emerald-400" />
-                      <span className="text-emerald-400">JSONコピー完了</span>
+                      <Check className="w-4 h-4 text-emerald-500" />
+                      <span>コピー完了</span>
                     </>
                   ) : (
                     <>
-                      <Copy className="w-3.5 h-3.5 text-white/50" />
+                      <Copy className="w-4 h-4" />
                       <span>JSONコピー</span>
                     </>
                   )}
@@ -329,10 +291,10 @@ export default function App() {
 
                 <button
                   onClick={handleDownloadJson}
-                  className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded-lg bg-white/[0.03] border border-white/[0.1] text-white/70 hover:text-white hover:bg-white/[0.08] transition-colors"
+                  className="flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-md bg-white border border-[#222222] text-[#222222] hover:bg-[#111111] hover:text-white transition-all cursor-pointer"
                 >
-                  <Download className="w-3.5 h-3.5 text-white/50" />
-                  <span className="hidden sm:inline">JSON保存</span>
+                  <Download className="w-4 h-4" />
+                  <span>JSON保存</span>
                 </button>
               </div>
             </div>
@@ -364,32 +326,32 @@ export default function App() {
             )}
 
             {activeTab === 'raw_json' && (
-              <div className="bg-[#10121a]/95 border border-white/[0.08] rounded-2xl p-6 shadow-xl">
-                <div className="flex items-center justify-between mb-4 border-b border-white/[0.08] pb-3">
+              <div className="bg-white border border-[#e9e9e9] rounded-lg p-6 sm:p-8 shadow-xs space-y-4">
+                <div className="flex items-center justify-between border-b border-[#e9e9e9] pb-4">
                   <div>
-                    <h4 className="font-serif-luxury text-sm font-bold text-white tracking-wide">
-                      指定スキーマ準拠 完全JSONデータ
+                    <h4 className="font-serif-luxury text-lg font-bold text-[#111111]">
+                      完全構造化 JSONデータ
                     </h4>
-                    <p className="text-xs text-white/50">
-                      他のCRMやAIワークフローにそのまま連携可能です
+                    <p className="text-sm text-[#666666] mt-0.5">
+                      CRMや他のワークフローにそのまま連携可能です
                     </p>
                   </div>
                   <button
                     onClick={handleCopyJson}
-                    className="flex items-center gap-1.5 px-4 py-2 bg-gradient-to-r from-[#d4af37] to-[#f3d98c] text-[#0c0d12] font-serif-luxury font-bold rounded-lg transition-colors text-xs"
+                    className="flex items-center gap-2 px-5 py-2.5 bg-[#111111] hover:bg-[#252525] text-white font-bold rounded-md transition-colors text-sm cursor-pointer"
                   >
                     {copiedJson ? (
                       <>
-                        <Check className="w-3.5 h-3.5" /> コピー完了
+                        <Check className="w-4 h-4 text-emerald-400" /> コピー完了
                       </>
                     ) : (
                       <>
-                        <Copy className="w-3.5 h-3.5" /> 全文コピー
+                        <Copy className="w-4 h-4" /> 全文コピー
                       </>
                     )}
                   </button>
                 </div>
-                <pre className="p-5 rounded-xl bg-[#090a0f] border border-white/[0.08] font-mono text-xs text-emerald-300 whitespace-pre-wrap leading-relaxed overflow-x-auto max-h-[600px]">
+                <pre className="p-6 rounded-md bg-[#fafafa] border border-[#e9e9e9] font-mono text-sm sm:text-base text-[#111111] whitespace-pre-wrap leading-relaxed overflow-x-auto max-h-[600px]">
                   {JSON.stringify(result, null, 2)}
                 </pre>
               </div>
@@ -399,14 +361,28 @@ export default function App() {
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-white/[0.08] bg-[#07080b] py-10 text-center text-xs text-white/40">
-        <div className="max-w-7xl mx-auto px-4 space-y-2">
-          <p className="font-serif-luxury font-semibold text-white/70 tracking-wide text-sm">
-            ELIXENCE · 横山ユウキ式 チラシ改善プロンプトメーカー
+      <footer className="border-t border-[#e9e9e9] bg-white py-12 text-center text-sm text-[#666666] mt-16">
+        <div className="max-w-7xl mx-auto px-6 sm:px-8 space-y-3">
+          <div className="flex items-center justify-center gap-2">
+            <span className="font-serif-luxury font-bold text-[#111111] tracking-wide text-lg sm:text-xl">
+              Elixence — アーティスティック経営コンサル 横山祐樹
+            </span>
+          </div>
+          <p className="text-[#555555] max-w-2xl mx-auto text-sm sm:text-base leading-relaxed">
+            戦略はロジックで組み、共鳴は音で仕掛ける。<br className="hidden sm:inline" />
+            Branding × Marketing × AI × System × Content × PR を束ね、成果に接続する。
           </p>
-          <p className="text-white/40 max-w-xl mx-auto text-xs">
-            美意識と品格のブランドデザイン × ダイレクトレスポンスマーケティング成約脳 × AI画像生成プロンプト自動構築エンジン
-          </p>
+          <div className="pt-2">
+            <a
+              href="https://www.elixence.work/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#111111] hover:underline"
+            >
+              <span>Elixence 公式サイト（elixence.work）へ</span>
+              <ExternalLink className="w-4 h-4 text-[#888888]" />
+            </a>
+          </div>
         </div>
       </footer>
 

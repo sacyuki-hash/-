@@ -1,29 +1,57 @@
 @import "tailwindcss";
 
 @layer base {
+  :root {
+    --ink-1: #111111;
+    --ink-2: #222222;
+    --ink-3: #444444;
+    --ink-muted: #666666;
+    --bg-page: #ffffff;
+    --bg-surface: #fafafa;
+    --divider: #e9e9e9;
+    --accent-gold: #9e7d23;
+  }
+
   body {
-    font-family: 'Plus Jakarta Sans', 'Noto Sans JP', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-family: 'Plus Jakarta Sans', 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    color: var(--ink-2);
+    background-color: var(--bg-page);
+    line-height: 1.8;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    color: var(--ink-1);
+    font-weight: 700;
+    letter-spacing: -0.01em;
   }
 }
 
 .font-serif-luxury {
-  font-family: 'Cormorant Garamond', 'Noto Serif JP', Georgia, serif;
+  font-family: 'Cormorant Garamond', 'Noto Serif JP', Georgia, 'Hiragino Mincho ProN', serif;
 }
 
-.gold-gradient-text {
-  background: linear-gradient(135deg, #f7df94 0%, #d4af37 50%, #aa820a 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+.elx-border {
+  border-color: #e9e9e9;
 }
 
-.gold-border {
-  border-color: rgba(212, 175, 55, 0.25);
+.elx-divider {
+  border-bottom: 1px solid #e9e9e9;
 }
 
-.gold-glow {
-  box-shadow: 0 0 25px -5px rgba(212, 175, 55, 0.15);
+/* Custom scrollbar for clean editorial look */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
 }
-
-.hairline-divider {
-  border-color: rgba(255, 255, 255, 0.07);
+::-webkit-scrollbar-track {
+  background: #f7f7f7;
+}
+::-webkit-scrollbar-thumb {
+  background: #d4d4d4;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #999999;
 }
