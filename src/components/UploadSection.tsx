@@ -22,8 +22,7 @@ interface UploadSectionProps {
   onMetadataChange: (meta: SupplementaryInfo) => void;
   onAnalyze: () => void;
   isAnalyzing: boolean;
-  hasApiKey: boolean;
-  onOpenApiKeyModal: () => void;
+  rateLimitSeconds?: number | null;
 }
 
 export const UploadSection: React.FC<UploadSectionProps> = ({
@@ -33,8 +32,7 @@ export const UploadSection: React.FC<UploadSectionProps> = ({
   onMetadataChange,
   onAnalyze,
   isAnalyzing,
-  hasApiKey,
-  onOpenApiKeyModal,
+  rateLimitSeconds,
 }) => {
   const [showMetadata, setShowMetadata] = useState(true);
   const [showPresets, setShowPresets] = useState(false);
@@ -406,10 +404,12 @@ export const UploadSection: React.FC<UploadSectionProps> = ({
         <button
           type="button"
           onClick={onAnalyze}
-          disabled={isAnalyzing}
+          disabled={isAnalyzing || (rateLimitSeconds !== null && rateLimitSeconds !== undefined && rateLimitSeconds > 0)}
           className={`w-full py-4 px-6 rounded-xl font-bold text-base tracking-wide transition-all duration-300 flex items-center justify-center gap-3 cursor-pointer shadow-md hover:shadow-lg ${
             isAnalyzing
               ? 'bg-slate-700 text-slate-200 cursor-wait'
+              : rateLimitSeconds && rateLimitSeconds > 0
+              ? 'bg-slate-600/70 text-slate-200 cursor-not-allowed'
               : !image
               ? 'bg-slate-900/85 hover:bg-slate-900 text-white'
               : 'bg-gradient-to-r from-slate-900 via-slate-800 to-slate-950 hover:from-slate-800 hover:to-slate-900 text-white ring-1 ring-white/30'
@@ -419,6 +419,12 @@ export const UploadSection: React.FC<UploadSectionProps> = ({
             <>
               <div className="w-5 h-5 border-2 border-white/80 border-t-transparent rounded-full animate-spin" />
               <span className="tracking-wide">Elixence マーケティング脳 診断中...</span>
+            </>
+          ) : rateLimitSeconds && rateLimitSeconds > 0 ? (
+            <>
+              <span className="tracking-wide font-medium text-sm sm:text-base">
+                AIフル稼働中（待機残り {rateLimitSeconds}秒）
+              </span>
             </>
           ) : (
             <>
@@ -435,19 +441,9 @@ export const UploadSection: React.FC<UploadSectionProps> = ({
         <div className="pt-1 flex items-center justify-between text-[11px] text-slate-500">
           <span className="flex items-center gap-1.5">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-            完全クライアントサイド実行
+            クライアント直接解析 · 画像は安全に保持されます
           </span>
-          {!hasApiKey ? (
-            <button
-              type="button"
-              onClick={onOpenApiKeyModal}
-              className="text-amber-700 hover:text-amber-900 font-semibold underline underline-offset-2"
-            >
-              ※APIキーを設定してください
-            </button>
-          ) : (
-            <span className="text-slate-400">画像・キーはブラウザ内保持</span>
-          )}
+          <span className="text-slate-400">Elixence Intelligence</span>
         </div>
       </div>
     </div>

@@ -299,59 +299,30 @@ const AD_DIAGNOSIS_SCHEMA = {
   ],
 };
 
-export const GEMINI_API_KEY_STORAGE_KEY = 'elixence_gemini_api_key';
-
-export function getStoredApiKey(): string {
-  try {
-    const local = localStorage.getItem(GEMINI_API_KEY_STORAGE_KEY);
-    if (local && local.trim()) {
-      return local.trim();
-    }
-  } catch (e) {
-    console.warn('Unable to access localStorage:', e);
-  }
-  const envKey = (import.meta.env.VITE_GEMINI_API_KEY as string | undefined)?.trim();
-  return envKey || '';
-}
-
-export function setStoredApiKey(key: string): void {
-  try {
-    localStorage.setItem(GEMINI_API_KEY_STORAGE_KEY, key.trim());
-  } catch (e) {
-    console.error('Failed to save API key to localStorage:', e);
-  }
-}
-
-export function removeStoredApiKey(): void {
-  try {
-    localStorage.removeItem(GEMINI_API_KEY_STORAGE_KEY);
-  } catch (e) {
-    console.error('Failed to remove API key from localStorage:', e);
-  }
-}
-
-export function hasStoredApiKey(): boolean {
-  return Boolean(getStoredApiKey());
-}
-
 export interface AnalyzeAdClientParams {
   imageData: string;
   mimeType?: string;
   metadata?: SupplementaryInfo;
-  apiKey?: string;
+}
+
+export class RateLimitError extends Error {
+  isRateLimit = true;
+  constructor(message = '現在アクセスが集中しております。AIがフル稼働中のため、約1分ほどお待ちいただいてから再度生成ボタンを押してください。') {
+    super(message);
+    this.name = 'RateLimitError';
+  }
 }
 
 export async function analyzeAdClientSide({
   imageData,
   mimeType = 'image/jpeg',
   metadata,
-  apiKey,
 }: AnalyzeAdClientParams): Promise<AdDiagnosisResult> {
-  const activeApiKey = (apiKey && apiKey.trim()) || getStoredApiKey();
+  const apiKey = (import.meta.env.VITE_GEMINI_API_KEY as string | undefined)?.trim();
 
-  if (!activeApiKey || !activeApiKey.trim()) {
+  if (!apiKey) {
     throw new Error(
-      'Gemini APIキーが設定されていません。画面右上の「APIキー設定」よりGemini APIキーをご入力ください。'
+      'Gemini APIキー（VITE_GEMINI_API_KEY）が設定されていません。環境変数をご確認ください。'
     );
   }
 
@@ -365,7 +336,7 @@ export async function analyzeAdClientSide({
   }
 
   const ai = new GoogleGenAI({
-    apiKey: activeApiKey.trim(),
+    apiKey: apiKey.trim(),
   });
 
   const imagePart = {
@@ -404,21 +375,27 @@ export async function analyzeAdClientSide({
       console.warn(`[ClientGemini] Model ${modelName} failed:`, errMsg);
 
       // Check for rate limit or quota
-      if (errMsg.includes('429') || errMsg.includes('RESOURCE_EXHAUSTED') || errMsg.includes('quota')) {
+      if (
+        errMsg.includes('429') ||
+        errMsg.includes('RESOURCE_EXHAUSTED') ||
+        errMsg.includes('quota') ||
+        errMsg.includes('Too Many Requests')
+      ) {
         continue;
       }
     }
   }
 
-  // If both failed or other error
+  // If failed, analyze the error
   const errMsg = lastError?.message || String(lastError || '広告の解析に失敗しました。');
-  if (errMsg.includes('429') || errMsg.includes('RESOURCE_EXHAUSTED') || errMsg.includes('quota')) {
-    throw new Error('Gemini APIの利用制限（Rate Limit）に達しました。数十秒待ってから再試行してください。');
+  if (
+    errMsg.includes('429') ||
+    errMsg.includes('RESOURCE_EXHAUSTED') ||
+    errMsg.includes('quota') ||
+    errMsg.includes('Too Many Requests')
+  ) {
+    throw new RateLimitError();
   }
 
-  if (errMsg.includes('API_KEY_INVALID') || errMsg.includes('key not valid') || errMsg.includes('403')) {
-    throw new Error('入力されたGemini APIキーが無効です。画面右上の「APIキー設定」より正しいキーを入力してください。');
-  }
-
-  throw new Error(`Gemini API実行エラー: ${errMsg.slice(0, 200)}`);
+  throw new Error(`解析処理でエラーが発生しました。時間をおいて再試行してください。`);
 }

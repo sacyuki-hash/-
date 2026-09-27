@@ -6,14 +6,15 @@ import {
   Download,
   Copy,
   Check,
-  AlertCircle,
   RefreshCw,
   ExternalLink,
   Sparkles,
   Layers,
   ShieldCheck,
-  HelpCircle,
   Compass,
+  Clock,
+  Info,
+  X,
 } from 'lucide-react';
 import { Header } from './components/Header';
 import { UploadSection } from './components/UploadSection';
@@ -23,9 +24,8 @@ import { DiagnosisView } from './components/DiagnosisView';
 import { ConceptsView } from './components/ConceptsView';
 import { CopyOfferCtaSection } from './components/CopyOfferCtaSection';
 import { ThreeSecondExplainerModal } from './components/ThreeSecondExplainerModal';
-import { ApiKeyModal } from './components/ApiKeyModal';
 import { AdDiagnosisResult, SupplementaryInfo } from './types/adDiagnosis';
-import { analyzeAdClientSide, hasStoredApiKey, getStoredApiKey } from './utils/geminiClient';
+import { analyzeAdClientSide, RateLimitError } from './utils/geminiClient';
 
 export default function App() {
   const [image, setImage] = useState<{ data: string; mimeType: string; name?: string } | null>(null);
@@ -46,22 +46,14 @@ export default function App() {
 
   const [result, setResult] = useState<AdDiagnosisResult | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [generalError, setGeneralError] = useState<string | null>(null);
   const [rateLimitSeconds, setRateLimitSeconds] = useState<number | null>(null);
-  const [activeTab, setActiveTab] = useState<'concepts' | 'marketing_brain' | 'audit' | 'diagnosis' | 'copy_offer' | 'raw_json'>('concepts');
+  const [activeTab, setActiveTab] = useState<'concepts' | 'marketing_brain' | 'diagnosis' | 'copy_offer' | 'raw_json'>('concepts');
 
   const [showExplainerModal, setShowExplainerModal] = useState(false);
-  const [showApiKeyModal, setShowApiKeyModal] = useState(false);
-  const [apiKeyModalNotice, setApiKeyModalNotice] = useState<string | undefined>(undefined);
-  const [apiKeyPresent, setApiKeyPresent] = useState<boolean>(false);
   const [copiedJson, setCopiedJson] = useState(false);
 
-  // Sync API key state from localStorage
-  useEffect(() => {
-    setApiKeyPresent(hasStoredApiKey());
-  }, []);
-
-  // Handle countdown for rate limits
+  // Handle countdown for rate limits (1 minute = 60 seconds)
   useEffect(() => {
     if (rateLimitSeconds === null || rateLimitSeconds <= 0) return;
     const timer = setInterval(() => {
@@ -73,45 +65,49 @@ export default function App() {
     return () => clearInterval(timer);
   }, [rateLimitSeconds]);
 
-  // Client-side direct call to Gemini API
+  // Client-side direct call to Gemini API using import.meta.env.VITE_GEMINI_API_KEY
   const handleAnalyze = async () => {
-    if (!image) {
-      setError('広告画像をアップロードするか、事例プリセットを選択してください。');
+    if (rateLimitSeconds && rateLimitSeconds > 0) {
       return;
     }
 
-    const currentKey = getStoredApiKey();
-    if (!currentKey) {
-      setApiKeyModalNotice('分析を開始するには、お持ちのGemini APIキーを入力してください。キーはお使いのブラウザにのみ安全に保存されます。');
-      setShowApiKeyModal(true);
+    if (!image) {
+      setGeneralError('広告画像をアップロードするか、事例プリセットを選択してください。');
       return;
     }
 
     setIsAnalyzing(true);
-    setError(null);
+    setGeneralError(null);
 
     try {
       const diagnosisResult = await analyzeAdClientSide({
         imageData: image.data,
         mimeType: image.mimeType,
         metadata,
-        apiKey: currentKey,
       });
 
       setResult(diagnosisResult);
       setRateLimitSeconds(null);
       setActiveTab('concepts'); // Switch to prompt concepts tab
     } catch (err: any) {
-      console.error('Analysis failed:', err);
-      const msg = err?.message || String(err);
-      if (msg.includes('Rate Limit') || msg.includes('429')) {
-        setRateLimitSeconds(35);
+      console.warn('Analysis caught exception:', err);
+      const isRate =
+        err instanceof RateLimitError ||
+        err?.isRateLimit ||
+        String(err?.message || '').includes('アクセスが集中') ||
+        String(err?.message || '').includes('429') ||
+        String(err?.message || '').includes('RESOURCE_EXHAUSTED') ||
+        String(err?.message || '').includes('quota') ||
+        String(err?.message || '').includes('Too Many Requests');
+
+      if (isRate) {
+        // Set elegant 60-second rate limit wait without harsh red errors
+        setRateLimitSeconds(60);
+        setGeneralError(null);
+      } else {
+        const msg = err?.message || '通信環境をご確認の上、再度お試しください。';
+        setGeneralError(msg);
       }
-      if (msg.includes('APIキー') || msg.includes('API_KEY')) {
-        setApiKeyModalNotice('APIキーが無効または設定されていません。正しいキーを入力してください。');
-        setShowApiKeyModal(true);
-      }
-      setError(msg || '通信エラーが発生しました。もう一度お試しください。');
     } finally {
       setIsAnalyzing(false);
     }
@@ -145,11 +141,6 @@ export default function App() {
       {/* Top Header */}
       <Header
         onOpenExplainerModal={() => setShowExplainerModal(true)}
-        onOpenApiKeyModal={() => {
-          setApiKeyModalNotice(undefined);
-          setShowApiKeyModal(true);
-        }}
-        hasApiKey={apiKeyPresent}
       />
 
       {/* Main Content Area */}
@@ -175,58 +166,73 @@ export default function App() {
             <p className="text-xs sm:text-sm text-slate-600 leading-relaxed max-w-3xl">
               安っぽい煽りチラシは店を殺し、ただ綺麗なだけのアート広告は売上を殺す——。
               横山祐樹式マーケティング脳が、広告の心理障壁を「3秒ルール」で解体。
-              高単価店舗・サロンの品格を守りながら成約率を最大化するAI画像生成用プロンプトを、ブラウザ完結で直接構築します。
+              高単価店舗・サロンの品格を守りながら成約率を最大化するAI画像生成用プロンプトを、直接構築します。
             </p>
           </div>
         </section>
 
-        {/* Error notification */}
-        {error && (
-          <div className="p-5 rounded-2xl bg-rose-50/80 backdrop-blur-md border border-rose-200/80 text-rose-950 text-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-sm animate-in fade-in">
-            <div className="flex items-start gap-3">
-              <AlertCircle className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" />
-              <div className="space-y-1">
-                <p className="font-bold text-rose-900">{error}</p>
-                {rateLimitSeconds !== null && rateLimitSeconds > 0 && (
-                  <p className="text-xs text-rose-700">
-                    レートリミット待機中: 約 <span className="font-bold">{rateLimitSeconds}</span> 秒後に再試行可能です
+        {/* Elegant Rate Limit Calm Notice (No harsh red warning) */}
+        {rateLimitSeconds !== null && rateLimitSeconds > 0 && (
+          <div className="rounded-3xl bg-white/85 backdrop-blur-xl border border-amber-200/80 p-6 sm:p-7 shadow-[0_10px_35px_-5px_rgba(245,158,11,0.08)] text-slate-800 space-y-4 animate-in fade-in duration-300">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div className="flex items-start gap-4">
+                <div className="w-12 h-12 rounded-2xl bg-amber-50/90 border border-amber-200/60 text-amber-700 flex items-center justify-center shrink-0 shadow-2xs">
+                  <Clock className="w-6 h-6 animate-pulse" />
+                </div>
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <span className="font-serif-luxury text-xs font-bold tracking-[0.2em] text-amber-700 uppercase">
+                      ACCESS QUEUE
+                    </span>
+                    <span className="text-slate-300">·</span>
+                    <span className="text-xs text-slate-500 font-medium">リクエスト順次処理中</span>
+                  </div>
+                  <h3 className="font-serif-luxury text-xl sm:text-2xl font-bold text-slate-900">
+                    現在アクセスが集中しております
+                  </h3>
+                  <p className="text-xs sm:text-sm text-slate-600 leading-relaxed max-w-2xl">
+                    AIがフル稼働中のため、約1分ほどお待ちいただいてから再度生成ボタンを押してください。
                   </p>
-                )}
+                </div>
+              </div>
+
+              {/* Countdown badge */}
+              <div className="flex items-center gap-3 shrink-0 self-end sm:self-auto bg-amber-50/70 border border-amber-200/70 px-4 py-2.5 rounded-2xl">
+                <div className="text-right">
+                  <span className="text-[10px] text-amber-800 font-semibold block uppercase tracking-wider">
+                    RETRY IN
+                  </span>
+                  <span className="text-xl sm:text-2xl font-bold text-amber-900 font-mono tabular-nums">
+                    {rateLimitSeconds} <span className="text-xs font-normal text-amber-700">秒</span>
+                  </span>
+                </div>
               </div>
             </div>
-            <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto">
-              {!apiKeyPresent && (
-                <button
-                  onClick={() => {
-                    setApiKeyModalNotice('Gemini APIキーを設定してください。');
-                    setShowApiKeyModal(true);
-                  }}
-                  className="text-xs font-bold px-3.5 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white transition-all cursor-pointer"
-                >
-                  APIキー設定
-                </button>
-              )}
-              <button
-                onClick={() => {
-                  setError(null);
-                  handleAnalyze();
-                }}
-                disabled={isAnalyzing}
-                className="text-xs font-bold px-3.5 py-2 rounded-xl bg-slate-900 text-white hover:bg-slate-800 transition-all flex items-center gap-1.5 cursor-pointer"
-              >
-                <RefreshCw className={`w-3.5 h-3.5 ${isAnalyzing ? 'animate-spin' : ''}`} />
-                <span>{rateLimitSeconds ? `再試行 (${rateLimitSeconds}s)` : '再試行'}</span>
-              </button>
-              <button
-                onClick={() => {
-                  setError(null);
-                  setRateLimitSeconds(null);
-                }}
-                className="text-xs font-medium px-3 py-2 rounded-xl bg-white/80 border border-slate-200 hover:bg-white text-slate-700 transition-colors cursor-pointer"
-              >
-                閉じる
-              </button>
+
+            {/* Subtle progress indicator */}
+            <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
+              <div
+                className="bg-gradient-to-r from-amber-400 to-amber-600 h-full rounded-full transition-all duration-1000 ease-linear"
+                style={{ width: `${Math.max(0, Math.min(100, ((60 - rateLimitSeconds) / 60) * 100))}%` }}
+              />
             </div>
+          </div>
+        )}
+
+        {/* Calm Non-Rate-Limit Error Notice (Subtle, tranquil design, no red warning) */}
+        {generalError && (
+          <div className="rounded-2xl bg-white/80 backdrop-blur-md border border-slate-200 p-4 sm:p-5 text-slate-700 flex items-center justify-between gap-4 shadow-sm animate-in fade-in">
+            <div className="flex items-center gap-3 text-xs sm:text-sm">
+              <Info className="w-5 h-5 text-slate-500 shrink-0" />
+              <span>{generalError}</span>
+            </div>
+            <button
+              onClick={() => setGeneralError(null)}
+              className="text-xs font-medium text-slate-500 hover:text-slate-800 p-1 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer"
+              title="閉じる"
+            >
+              <X className="w-4 h-4" />
+            </button>
           </div>
         )}
 
@@ -241,11 +247,7 @@ export default function App() {
               onMetadataChange={setMetadata}
               onAnalyze={handleAnalyze}
               isAnalyzing={isAnalyzing}
-              hasApiKey={apiKeyPresent}
-              onOpenApiKeyModal={() => {
-                setApiKeyModalNotice(undefined);
-                setShowApiKeyModal(true);
-              }}
+              rateLimitSeconds={rateLimitSeconds}
             />
           </div>
 
@@ -278,7 +280,7 @@ export default function App() {
                     完成プロンプトと診断結果がここに表示されます
                   </h3>
                   <p className="text-xs sm:text-sm text-slate-500 leading-relaxed">
-                    左側のステップ1で広告画像をセットするか「事例プリセット」を選択し、生成ボタンを押してください。
+                    左側のステップに従って広告画像をセットするか「事例プリセット」を選択し、生成ボタンを押してください。
                   </p>
                 </div>
 
@@ -317,7 +319,7 @@ export default function App() {
                 <div className="p-4 rounded-xl bg-slate-50/70 border border-slate-100 flex items-center gap-3 text-xs text-slate-500">
                   <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
                   <span>
-                    完全クライアントサイド実行 · APIキーおよび画像データはブラウザのlocalStorageとローカルメモリ内でのみ処理されます。
+                    完全クライアントサイド実行 · 画像データはお使いのブラウザ内メモリでのみ処理されます。
                   </span>
                 </div>
               </div>
@@ -522,19 +524,6 @@ export default function App() {
       <ThreeSecondExplainerModal
         isOpen={showExplainerModal}
         onClose={() => setShowExplainerModal(false)}
-      />
-
-      {/* API Key BYOK Modal */}
-      <ApiKeyModal
-        isOpen={showApiKeyModal}
-        onClose={() => {
-          setShowApiKeyModal(false);
-          setApiKeyModalNotice(undefined);
-        }}
-        onKeySaved={(newKey) => {
-          setApiKeyPresent(Boolean(newKey));
-        }}
-        initialNotice={apiKeyModalNotice}
       />
     </div>
   );

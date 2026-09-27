@@ -1,17 +1,11 @@
 import React from 'react';
-import { ArrowUpRight, BookOpen, Key } from 'lucide-react';
+import { ArrowUpRight, BookOpen } from 'lucide-react';
 
 interface HeaderProps {
   onOpenExplainerModal: () => void;
-  onOpenApiKeyModal: () => void;
-  hasApiKey: boolean;
 }
 
-export const Header: React.FC<HeaderProps> = ({
-  onOpenExplainerModal,
-  onOpenApiKeyModal,
-  hasApiKey,
-}) => {
+export const Header: React.FC<HeaderProps> = ({ onOpenExplainerModal }) => {
   return (
     <header className="sticky top-0 z-40 bg-white/70 backdrop-blur-md border-b border-white/60 shadow-[0_4px_20px_-2px_rgba(0,0,0,0.03)] transition-all">
       <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12 h-20 sm:h-22 flex items-center justify-between">
@@ -36,25 +30,6 @@ export const Header: React.FC<HeaderProps> = ({
 
         {/* Action navigation */}
         <div className="flex items-center gap-3 sm:gap-4">
-          {/* API Key BYOK Button */}
-          <button
-            onClick={onOpenApiKeyModal}
-            className={`flex items-center gap-2 px-3.5 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm font-medium rounded-xl border transition-all duration-300 cursor-pointer shadow-2xs ${
-              hasApiKey
-                ? 'bg-white/80 hover:bg-white text-slate-800 border-slate-200/90 hover:border-slate-300'
-                : 'bg-amber-50/90 hover:bg-amber-100/90 text-amber-900 border-amber-300/80 animate-pulse'
-            }`}
-            title="Gemini APIキーを設定（ブラウザに保存）"
-          >
-            <Key className="w-3.5 h-3.5 text-amber-600 shrink-0" />
-            <span className="tracking-wide">APIキー設定</span>
-            <span
-              className={`w-2 h-2 rounded-full shrink-0 ${
-                hasApiKey ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.6)]' : 'bg-amber-500'
-              }`}
-            />
-          </button>
-
           {/* 3-Second Philosophy Explainer Button */}
           <button
             onClick={onOpenExplainerModal}
