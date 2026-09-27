@@ -25,48 +25,48 @@ export const CopyOfferCtaSection: React.FC<CopyOfferCtaSectionProps> = ({
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       {/* Main Copy Options */}
-      <section className="bg-white border border-[#e9e9e9] rounded-lg p-6 sm:p-10 lg:p-12 shadow-xs space-y-6">
-        <div className="flex items-center gap-3 border-b border-[#e9e9e9] pb-4">
-          <span className="font-serif-luxury text-sm font-bold tracking-[0.2em] text-[#9e7d23] uppercase">
+      <section className="rounded-2xl bg-white/70 backdrop-blur-md border border-white/80 p-6 sm:p-8 shadow-[0_8px_30px_rgb(0,0,0,0.03)] space-y-4">
+        <div className="flex items-center gap-2.5 border-b border-slate-100 pb-3">
+          <span className="font-serif-luxury text-xs font-bold tracking-[0.2em] text-amber-700 uppercase">
             HEADLINE OPTIONS
           </span>
-          <span className="text-[#cccccc]">/</span>
-          <h3 className="text-xl sm:text-2xl font-bold text-[#111111]">
+          <span className="text-slate-300">·</span>
+          <h3 className="text-lg sm:text-xl font-bold text-slate-900">
             メインキャッチコピー案（3方向）
           </h3>
         </div>
 
-        <div className="space-y-4">
+        <div className="space-y-3">
           {mainCopies?.map((copy, idx) => {
             const copyId = `copy-${idx}`;
             const isCopied = copiedIndex === copyId;
             return (
               <div
                 key={idx}
-                className="p-6 rounded-md bg-[#fafafa] border border-[#e9e9e9] hover:border-[#111111] transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+                className="p-4 sm:p-5 rounded-xl bg-white/60 border border-slate-200/80 hover:border-slate-300 transition-all duration-300 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
               >
-                <div className="flex items-start gap-4">
-                  <span className="font-serif-luxury font-bold text-lg text-[#111111] shrink-0 mt-0.5">
+                <div className="flex items-start gap-3">
+                  <span className="font-serif-luxury font-bold text-base text-slate-800 shrink-0 mt-0.5">
                     0{idx + 1}.
                   </span>
-                  <p className="font-serif-luxury text-xl sm:text-2xl font-bold text-[#111111] leading-snug">
+                  <p className="font-serif-luxury text-lg sm:text-xl font-bold text-slate-900 leading-snug">
                     {copy}
                   </p>
                 </div>
                 <button
                   onClick={() => handleCopy(copy, copyId)}
-                  className="self-end sm:self-center shrink-0 flex items-center gap-2 px-4 py-2 text-sm font-bold rounded-md bg-white hover:bg-[#111111] text-[#222222] hover:text-white transition-all border border-[#222222] cursor-pointer"
+                  className="self-end sm:self-center shrink-0 flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-bold rounded-lg bg-white/90 hover:bg-slate-900 text-slate-700 hover:text-white transition-all duration-300 border border-slate-200/80 cursor-pointer shadow-2xs"
                 >
                   {isCopied ? (
                     <>
-                      <Check className="w-4 h-4 text-emerald-600" />
-                      <span>コピー完了</span>
+                      <Check className="w-3.5 h-3.5 text-emerald-500" />
+                      <span>コピー済</span>
                     </>
                   ) : (
                     <>
-                      <Copy className="w-4 h-4" />
+                      <Copy className="w-3.5 h-3.5 text-slate-400" />
                       <span>コピー</span>
                     </>
                   )}
@@ -77,36 +77,35 @@ export const CopyOfferCtaSection: React.FC<CopyOfferCtaSectionProps> = ({
         </div>
       </section>
 
-      {/* Offer & CTA Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+      {/* Offer Options & CTA Options */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Offer Options */}
-        <section className="bg-white border border-[#e9e9e9] rounded-lg p-6 sm:p-10 shadow-xs space-y-6">
-          <div className="flex items-center gap-3 border-b border-[#e9e9e9] pb-4">
-            <span className="font-serif-luxury text-sm font-bold tracking-[0.2em] text-[#9e7d23] uppercase">
+        <section className="rounded-2xl bg-white/70 backdrop-blur-md border border-white/80 p-6 shadow-[0_8px_30px_rgb(0,0,0,0.03)] space-y-4">
+          <div className="flex items-center gap-2 border-b border-slate-100 pb-2.5">
+            <span className="font-serif-luxury text-xs font-bold tracking-[0.2em] text-amber-700 uppercase">
               OFFER ARCHITECTURE
             </span>
-            <span className="text-[#cccccc]">/</span>
-            <h3 className="text-lg sm:text-xl font-bold text-[#111111]">
-              推奨初回オファー（心理障壁の破壊）
-            </h3>
+            <h4 className="text-sm font-bold text-slate-900">
+              初回限定オファー・特典案
+            </h4>
           </div>
 
-          <div className="space-y-3.5">
+          <div className="space-y-2.5">
             {offers?.map((offer, idx) => {
               const offerId = `offer-${idx}`;
               const isCopied = copiedIndex === offerId;
               return (
                 <div
                   key={idx}
-                  className="p-4 rounded-md bg-[#fafafa] border border-[#e9e9e9] flex items-center justify-between gap-3"
+                  className="p-3.5 rounded-xl bg-white/60 border border-slate-200/70 flex items-center justify-between gap-3 text-xs sm:text-sm text-slate-800"
                 >
-                  <p className="text-base text-[#222222] font-semibold">{offer}</p>
+                  <span>{offer}</span>
                   <button
                     onClick={() => handleCopy(offer, offerId)}
-                    className="shrink-0 p-2 text-[#666666] hover:text-[#111111] hover:bg-white rounded border border-transparent hover:border-[#cccccc] transition-colors cursor-pointer"
-                    title="オファーをコピー"
+                    className="p-1.5 rounded-md hover:bg-white text-slate-400 hover:text-slate-800 transition-colors shrink-0 cursor-pointer"
+                    title="コピー"
                   >
-                    {isCopied ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4" />}
+                    {isCopied ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
                   </button>
                 </div>
               );
@@ -115,33 +114,32 @@ export const CopyOfferCtaSection: React.FC<CopyOfferCtaSectionProps> = ({
         </section>
 
         {/* CTA Options */}
-        <section className="bg-white border border-[#e9e9e9] rounded-lg p-6 sm:p-10 shadow-xs space-y-6">
-          <div className="flex items-center gap-3 border-b border-[#e9e9e9] pb-4">
-            <span className="font-serif-luxury text-sm font-bold tracking-[0.2em] text-[#9e7d23] uppercase">
-              CTA TRIGGERS
+        <section className="rounded-2xl bg-white/70 backdrop-blur-md border border-white/80 p-6 shadow-[0_8px_30px_rgb(0,0,0,0.03)] space-y-4">
+          <div className="flex items-center gap-2 border-b border-slate-100 pb-2.5">
+            <span className="font-serif-luxury text-xs font-bold tracking-[0.2em] text-slate-700 uppercase">
+              CALL TO ACTION
             </span>
-            <span className="text-[#cccccc]">/</span>
-            <h3 className="text-lg sm:text-xl font-bold text-[#111111]">
-              行動喚起ボタン・導線文言
-            </h3>
+            <h4 className="text-sm font-bold text-slate-900">
+              行動喚起ボタン文言（導線設計）
+            </h4>
           </div>
 
-          <div className="space-y-3.5">
+          <div className="space-y-2.5">
             {ctas?.map((cta, idx) => {
               const ctaId = `cta-${idx}`;
               const isCopied = copiedIndex === ctaId;
               return (
                 <div
                   key={idx}
-                  className="p-4 rounded-md bg-[#fafafa] border border-[#e9e9e9] flex items-center justify-between gap-3"
+                  className="p-3.5 rounded-xl bg-white/60 border border-slate-200/70 flex items-center justify-between gap-3 text-xs sm:text-sm text-slate-800"
                 >
-                  <p className="text-base text-[#222222] font-semibold">{cta}</p>
+                  <span className="font-medium text-slate-900">{cta}</span>
                   <button
                     onClick={() => handleCopy(cta, ctaId)}
-                    className="shrink-0 p-2 text-[#666666] hover:text-[#111111] hover:bg-white rounded border border-transparent hover:border-[#cccccc] transition-colors cursor-pointer"
-                    title="CTAをコピー"
+                    className="p-1.5 rounded-md hover:bg-white text-slate-400 hover:text-slate-800 transition-colors shrink-0 cursor-pointer"
+                    title="コピー"
                   >
-                    {isCopied ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4" />}
+                    {isCopied ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
                   </button>
                 </div>
               );
@@ -150,47 +148,43 @@ export const CopyOfferCtaSection: React.FC<CopyOfferCtaSectionProps> = ({
         </section>
       </div>
 
-      {/* Trust Elements & Notes Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+      {/* Trust Elements & Notes */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Trust Elements */}
-        <section className="bg-white border border-[#e9e9e9] rounded-lg p-6 sm:p-10 shadow-xs space-y-6">
-          <div className="flex items-center gap-3 border-b border-[#e9e9e9] pb-4">
-            <span className="font-serif-luxury text-sm font-bold tracking-[0.2em] text-[#9e7d23] uppercase">
-              SOCIAL PROOF
+        <section className="rounded-2xl bg-white/70 backdrop-blur-md border border-white/80 p-6 shadow-[0_8px_30px_rgb(0,0,0,0.03)] space-y-3">
+          <div className="flex items-center gap-2 border-b border-slate-100 pb-2">
+            <span className="font-serif-luxury text-xs font-bold tracking-[0.2em] text-emerald-700 uppercase">
+              CREDIBILITY
             </span>
-            <span className="text-[#cccccc]">/</span>
-            <h3 className="text-lg sm:text-xl font-bold text-[#111111]">
-              客観的信頼要素・証拠の掲載
-            </h3>
+            <h4 className="text-sm font-bold text-slate-900">
+              必須の信頼性要素（証拠・実績）
+            </h4>
           </div>
-
-          <ul className="space-y-2 text-base text-[#444444]">
-            {trustElements?.map((trust, idx) => (
-              <li key={idx} className="flex items-start gap-2.5">
-                <span className="text-[#111111] font-bold shrink-0">·</span>
-                <span>{trust}</span>
+          <ul className="space-y-1.5 text-xs text-slate-700">
+            {trustElements?.map((t, idx) => (
+              <li key={idx} className="flex items-start gap-2">
+                <span className="text-emerald-500 font-bold shrink-0">·</span>
+                <span>{t}</span>
               </li>
             ))}
           </ul>
         </section>
 
-        {/* Implementation Notes */}
-        <section className="bg-white border border-[#e9e9e9] rounded-lg p-6 sm:p-10 shadow-xs space-y-6">
-          <div className="flex items-center gap-3 border-b border-[#e9e9e9] pb-4">
-            <span className="font-serif-luxury text-sm font-bold tracking-[0.2em] text-[#9e7d23] uppercase">
-              STRATEGIC NOTES
+        {/* Strategic Notes */}
+        <section className="rounded-2xl bg-white/70 backdrop-blur-md border border-white/80 p-6 shadow-[0_8px_30px_rgb(0,0,0,0.03)] space-y-3">
+          <div className="flex items-center gap-2 border-b border-slate-100 pb-2">
+            <span className="font-serif-luxury text-xs font-bold tracking-[0.2em] text-slate-600 uppercase">
+              STRATEGY NOTES
             </span>
-            <span className="text-[#cccccc]">/</span>
-            <h3 className="text-lg sm:text-xl font-bold text-[#111111]">
-              制作・運用時の留意点
-            </h3>
+            <h4 className="text-sm font-bold text-slate-900">
+              制作・運用時の重要留意点
+            </h4>
           </div>
-
-          <ul className="space-y-2 text-base text-[#444444]">
-            {notes?.map((note, idx) => (
-              <li key={idx} className="flex items-start gap-2.5">
-                <span className="text-[#111111] font-bold shrink-0">·</span>
-                <span>{note}</span>
+          <ul className="space-y-1.5 text-xs text-slate-700">
+            {notes?.map((n, idx) => (
+              <li key={idx} className="flex items-start gap-2">
+                <span className="text-slate-400 font-bold shrink-0">·</span>
+                <span>{n}</span>
               </li>
             ))}
           </ul>

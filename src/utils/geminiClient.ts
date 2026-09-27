@@ -299,22 +299,59 @@ const AD_DIAGNOSIS_SCHEMA = {
   ],
 };
 
+export const GEMINI_API_KEY_STORAGE_KEY = 'elixence_gemini_api_key';
+
+export function getStoredApiKey(): string {
+  try {
+    const local = localStorage.getItem(GEMINI_API_KEY_STORAGE_KEY);
+    if (local && local.trim()) {
+      return local.trim();
+    }
+  } catch (e) {
+    console.warn('Unable to access localStorage:', e);
+  }
+  const envKey = (import.meta.env.VITE_GEMINI_API_KEY as string | undefined)?.trim();
+  return envKey || '';
+}
+
+export function setStoredApiKey(key: string): void {
+  try {
+    localStorage.setItem(GEMINI_API_KEY_STORAGE_KEY, key.trim());
+  } catch (e) {
+    console.error('Failed to save API key to localStorage:', e);
+  }
+}
+
+export function removeStoredApiKey(): void {
+  try {
+    localStorage.removeItem(GEMINI_API_KEY_STORAGE_KEY);
+  } catch (e) {
+    console.error('Failed to remove API key from localStorage:', e);
+  }
+}
+
+export function hasStoredApiKey(): boolean {
+  return Boolean(getStoredApiKey());
+}
+
 export interface AnalyzeAdClientParams {
   imageData: string;
   mimeType?: string;
   metadata?: SupplementaryInfo;
+  apiKey?: string;
 }
 
 export async function analyzeAdClientSide({
   imageData,
   mimeType = 'image/jpeg',
   metadata,
+  apiKey,
 }: AnalyzeAdClientParams): Promise<AdDiagnosisResult> {
-  const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+  const activeApiKey = (apiKey && apiKey.trim()) || getStoredApiKey();
 
-  if (!apiKey || !apiKey.trim()) {
+  if (!activeApiKey || !activeApiKey.trim()) {
     throw new Error(
-      'Gemini APIキーが設定されていません。Netlifyの環境変数または「.env」に「VITE_GEMINI_API_KEY=あなたのキー」を設定してください。'
+      'Gemini APIキーが設定されていません。画面右上の「APIキー設定」よりGemini APIキーをご入力ください。'
     );
   }
 
@@ -328,7 +365,7 @@ export async function analyzeAdClientSide({
   }
 
   const ai = new GoogleGenAI({
-    apiKey: apiKey.trim(),
+    apiKey: activeApiKey.trim(),
   });
 
   const imagePart = {
@@ -377,6 +414,10 @@ export async function analyzeAdClientSide({
   const errMsg = lastError?.message || String(lastError || '広告の解析に失敗しました。');
   if (errMsg.includes('429') || errMsg.includes('RESOURCE_EXHAUSTED') || errMsg.includes('quota')) {
     throw new Error('Gemini APIの利用制限（Rate Limit）に達しました。数十秒待ってから再試行してください。');
+  }
+
+  if (errMsg.includes('API_KEY_INVALID') || errMsg.includes('key not valid') || errMsg.includes('403')) {
+    throw new Error('入力されたGemini APIキーが無効です。画面右上の「APIキー設定」より正しいキーを入力してください。');
   }
 
   throw new Error(`Gemini API実行エラー: ${errMsg.slice(0, 200)}`);

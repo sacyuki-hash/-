@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Copy, Check, ArrowRight, Sparkles } from 'lucide-react';
+import { Copy, Check, Sparkles, CheckCircle2 } from 'lucide-react';
 import { Concepts, FinalPrompt } from '../types/adDiagnosis';
 
 interface ConceptsViewProps {
@@ -51,9 +51,9 @@ export const ConceptsView: React.FC<ConceptsViewProps> = ({ concepts, finalPromp
   const currentPromptText = finalPrompt[activeConcept];
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       {/* 3 Direction Selectors */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         {(Object.keys(conceptMetadata) as Array<keyof typeof conceptMetadata>).map((key) => {
           const meta = conceptMetadata[key];
           const isSelected = activeConcept === key;
@@ -61,22 +61,22 @@ export const ConceptsView: React.FC<ConceptsViewProps> = ({ concepts, finalPromp
             <button
               key={key}
               onClick={() => setActiveConcept(key)}
-              className={`p-6 sm:p-8 text-left rounded-md transition-all border cursor-pointer ${
+              className={`p-4 sm:p-5 text-left rounded-xl transition-all duration-300 border cursor-pointer ${
                 isSelected
-                  ? 'border-[#111111] bg-white shadow-xs ring-1 ring-[#111111]'
-                  : 'border-[#e9e9e9] bg-[#fafafa] hover:bg-white hover:border-[#cccccc]'
+                  ? 'bg-white/95 border-slate-900 shadow-sm ring-1 ring-slate-900/10'
+                  : 'bg-white/60 hover:bg-white/85 border-white/80 hover:border-slate-300 text-slate-700'
               }`}
             >
-              <div className="flex items-center justify-between mb-3 text-xs font-serif-luxury tracking-widest text-[#888888]">
+              <div className="flex items-center justify-between mb-1.5 text-[11px] font-serif-luxury tracking-widest text-slate-400">
                 <span>DIRECTION {meta.number}</span>
-                <span className={isSelected ? 'text-[#111111] font-bold' : ''}>
+                <span className={`text-[10px] px-1.5 py-0.5 rounded ${isSelected ? 'bg-slate-900 text-white font-medium' : 'bg-slate-100 text-slate-600'}`}>
                   {meta.tag}
                 </span>
               </div>
-              <h4 className="font-serif-luxury text-xl sm:text-2xl font-bold text-[#111111]">
+              <h4 className="font-serif-luxury text-base sm:text-lg font-bold text-slate-900">
                 {meta.title}
               </h4>
-              <p className="text-sm text-[#555555] mt-2 line-clamp-2 leading-relaxed">
+              <p className="text-xs text-slate-500 mt-1 line-clamp-2 leading-relaxed">
                 {meta.sub}
               </p>
             </button>
@@ -85,37 +85,37 @@ export const ConceptsView: React.FC<ConceptsViewProps> = ({ concepts, finalPromp
       </div>
 
       {/* Selected Direction Prompt Studio Card */}
-      <section className="bg-white border border-[#e9e9e9] rounded-lg p-6 sm:p-10 lg:p-12 shadow-xs space-y-8">
+      <section className="rounded-2xl bg-white/70 backdrop-blur-md border border-white/80 p-6 sm:p-8 shadow-[0_8px_30px_rgb(0,0,0,0.03)] space-y-6">
         {/* Header information */}
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 border-b border-[#e9e9e9] pb-6">
-          <div className="space-y-2">
-            <div className="flex items-center gap-3">
-              <span className="font-serif-luxury text-sm font-bold tracking-[0.2em] text-[#9e7d23] uppercase">
-                PROMPT DIRECTION {currentMeta.number}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-5">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <span className="font-serif-luxury text-xs font-bold tracking-[0.2em] text-amber-700 uppercase">
+                DIRECTION {currentMeta.number}
               </span>
-              <span className="text-[#cccccc]">/</span>
-              <span className="text-base text-[#555555] font-medium">{currentMeta.sub}</span>
+              <span className="text-slate-300">·</span>
+              <span className="text-xs text-slate-500 font-medium">{currentMeta.sub}</span>
             </div>
-            <h3 className="font-serif-luxury text-2xl sm:text-3xl font-bold text-[#111111]">
+            <h3 className="font-serif-luxury text-2xl font-bold text-slate-900">
               {currentMeta.title}
             </h3>
-            <p className="text-base text-[#555555] max-w-2xl leading-relaxed">
+            <p className="text-xs sm:text-sm text-slate-600 max-w-2xl leading-relaxed">
               {currentDetail?.summary || currentMeta.description}
             </p>
           </div>
 
           <button
             onClick={() => handleCopy(currentPromptText, `prompt-${activeConcept}`)}
-            className="self-start lg:self-center shrink-0 flex items-center gap-2.5 px-6 sm:px-8 py-3.5 sm:py-4 rounded-md bg-[#111111] hover:bg-[#252525] text-white font-bold text-base transition-all shadow-xs cursor-pointer"
+            className="self-start sm:self-center shrink-0 flex items-center gap-2 px-5 py-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-sm transition-all duration-300 shadow-sm hover:shadow cursor-pointer"
           >
             {copiedKey === `prompt-${activeConcept}` ? (
               <>
-                <Check className="w-5 h-5 text-emerald-400" />
-                <span>プロンプトをコピー完了</span>
+                <Check className="w-4 h-4 text-emerald-400" />
+                <span>コピー完了</span>
               </>
             ) : (
               <>
-                <Copy className="w-5 h-5" />
+                <Copy className="w-4 h-4 text-slate-300" />
                 <span>完成プロンプトをコピー</span>
               </>
             )}
@@ -123,51 +123,51 @@ export const ConceptsView: React.FC<ConceptsViewProps> = ({ concepts, finalPromp
         </div>
 
         {/* High-Contrast Prompt Box (Large, readable, editorial) */}
-        <div className="space-y-3">
-          <div className="flex items-center justify-between text-xs sm:text-sm text-[#777777] font-mono">
-            <span>// 100% COMPLETE JAPANESE PROMPT FOR AI IMAGE GENERATORS</span>
+        <div className="space-y-2">
+          <div className="flex items-center justify-between text-xs text-slate-500 font-mono">
+            <span>// 100% COMPLETE JAPANESE PROMPT</span>
             <span>Midjourney / FLUX / Imagen 3 / Canva</span>
           </div>
 
-          <div className="relative rounded-md bg-[#111111] text-[#f2f2f2] p-6 sm:p-8 lg:p-10 font-sans text-base sm:text-lg leading-[1.9] overflow-x-auto whitespace-pre-wrap selection:bg-white selection:text-black">
+          <div className="relative rounded-xl bg-slate-950 text-slate-100 p-5 sm:p-7 font-sans text-sm sm:text-base leading-[1.85] overflow-x-auto whitespace-pre-wrap selection:bg-white selection:text-black border border-slate-800/80 shadow-inner">
             {currentPromptText}
           </div>
         </div>
 
         {/* Component breakdown */}
         {currentDetail && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-[#e9e9e9]">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-3 border-t border-slate-100">
             {currentDetail.headline && (
-              <div className="p-6 rounded-md bg-[#fafafa] border border-[#e9e9e9] space-y-2">
-                <span className="text-xs font-serif-luxury text-[#9e7d23] font-bold tracking-wider uppercase">
+              <div className="p-4 rounded-xl bg-white/60 border border-slate-200/80 space-y-1">
+                <span className="text-[11px] font-serif-luxury text-amber-700 font-bold tracking-wider uppercase">
                   HEADLINE COPY
                 </span>
-                <p className="font-serif-luxury text-xl font-bold text-[#111111]">
+                <p className="font-serif-luxury text-base sm:text-lg font-bold text-slate-900">
                   {currentDetail.headline}
                 </p>
               </div>
             )}
 
             {currentDetail.color_scheme && (
-              <div className="p-6 rounded-md bg-[#fafafa] border border-[#e9e9e9] space-y-2">
-                <span className="text-xs font-serif-luxury text-[#9e7d23] font-bold tracking-wider uppercase">
+              <div className="p-4 rounded-xl bg-white/60 border border-slate-200/80 space-y-1">
+                <span className="text-[11px] font-serif-luxury text-amber-700 font-bold tracking-wider uppercase">
                   COLOR SCHEME &amp; TEXTURE
                 </span>
-                <p className="text-base text-[#333333]">
+                <p className="text-xs sm:text-sm text-slate-700 leading-relaxed">
                   {currentDetail.color_scheme}
                 </p>
               </div>
             )}
 
             {currentDetail.layout && currentDetail.layout.length > 0 && (
-              <div className="p-6 rounded-md bg-[#fafafa] border border-[#e9e9e9] space-y-2 md:col-span-2">
-                <span className="text-xs font-serif-luxury text-[#9e7d23] font-bold tracking-wider uppercase">
+              <div className="p-4 rounded-xl bg-white/60 border border-slate-200/80 space-y-1 md:col-span-2">
+                <span className="text-[11px] font-serif-luxury text-amber-700 font-bold tracking-wider uppercase">
                   LAYOUT &amp; VISUAL HIERARCHY
                 </span>
-                <ul className="space-y-1.5 text-base text-[#444444]">
+                <ul className="space-y-1 text-xs sm:text-sm text-slate-600">
                   {currentDetail.layout.map((item, idx) => (
                     <li key={idx} className="flex items-start gap-2">
-                      <span className="text-[#111111] font-bold shrink-0">·</span>
+                      <span className="text-slate-400 font-bold shrink-0">·</span>
                       <span>{item}</span>
                     </li>
                   ))}
