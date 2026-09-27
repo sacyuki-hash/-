@@ -1,0 +1,6 @@
+{
+  "name": "Elixence 横山ユウキ式 チラシ改善プロンプトメーカー",
+  "description": "チラシ・看板・広告画像をアップロードし、ダイレクトレスポンスマーケティングの観点から自動診断＆AI画像生成用プロンプト（3パターン）を即座に生成するプロフェッショナルツール。",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
