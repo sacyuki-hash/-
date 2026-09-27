@@ -1,14 +1,12 @@
 import React from 'react';
-import { Sparkles, FileCode, BookOpen } from 'lucide-react';
+import { BookOpen } from 'lucide-react';
 
 interface HeaderProps {
-  onOpenAiStudioModal: () => void;
   onOpenExplainerModal: () => void;
   onSelectPreset: (id: string) => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
-  onOpenAiStudioModal,
   onOpenExplainerModal,
 }) => {
   return (
@@ -44,16 +42,6 @@ export const Header: React.FC<HeaderProps> = ({
           >
             <BookOpen className="w-4 h-4 text-[#d4af37]" />
             <span>Elixence 3秒哲学</span>
-          </button>
-
-          <button
-            onClick={onOpenAiStudioModal}
-            className="flex items-center gap-2 px-3.5 py-2 text-xs sm:text-sm font-medium text-[#f5de99] hover:text-[#fff0c2] bg-[#d4af37]/10 hover:bg-[#d4af37]/20 border border-[#d4af37]/35 rounded-lg transition-colors shadow-sm"
-            title="Google AI Studio にそのまま貼れる System Instruction & JSON Schema を表示"
-          >
-            <FileCode className="w-4 h-4 text-[#d4af37]" />
-            <span className="hidden md:inline">Google AI Studio</span>
-            <span>連携設定</span>
           </button>
         </div>
       </div>

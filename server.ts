@@ -88,7 +88,7 @@ function extractErrorInfo(err: any): { message: string; isRateLimit: boolean; re
 app.get('/api/health', (_req, res) => {
   res.json({
     status: 'ok',
-    hasApiKey: Boolean(process.env.GEMINI_API_KEY),
+    hasApiKey: Boolean(process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY),
     model: 'gemini-3.8-flash / gemini-3.1-flash-lite',
   });
 });
@@ -96,10 +96,15 @@ app.get('/api/health', (_req, res) => {
 // Main Ad Analysis and Prompt Generation Endpoint
 app.post('/api/analyze-ad', async (req, res) => {
   try {
-    const apiKey = process.env.GEMINI_API_KEY;
+    const apiKey =
+      (typeof req.body?.apiKey === 'string' && req.body.apiKey.trim() ? req.body.apiKey.trim() : null) ||
+      (typeof req.headers['x-gemini-api-key'] === 'string' && req.headers['x-gemini-api-key'].trim() ? req.headers['x-gemini-api-key'].trim() : null) ||
+      process.env.VITE_GEMINI_API_KEY ||
+      process.env.GEMINI_API_KEY;
+
     if (!apiKey) {
       return res.status(500).json({
-        error: 'GEMINI_API_KEY is not configured in environment variables.',
+        error: '環境変数（GEMINI_API_KEY または VITE_GEMINI_API_KEY）が設定されていません。',
       });
     }
 

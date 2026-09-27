@@ -19,7 +19,6 @@ import { ThreeSecondAuditCard } from './components/ThreeSecondAuditCard';
 import { DiagnosisView } from './components/DiagnosisView';
 import { ConceptsView } from './components/ConceptsView';
 import { CopyOfferCtaSection } from './components/CopyOfferCtaSection';
-import { AiStudioModal } from './components/AiStudioModal';
 import { ThreeSecondExplainerModal } from './components/ThreeSecondExplainerModal';
 import { AdDiagnosisResult, SupplementaryInfo } from './types/adDiagnosis';
 import { SAMPLE_PRESETS } from './utils/presets';
@@ -47,7 +46,6 @@ export default function App() {
   const [rateLimitSeconds, setRateLimitSeconds] = useState<number | null>(null);
   const [activeTab, setActiveTab] = useState<'concepts' | 'diagnosis' | 'copy_offer' | 'raw_json'>('concepts');
 
-  const [showAiStudioModal, setShowAiStudioModal] = useState(false);
   const [showExplainerModal, setShowExplainerModal] = useState(false);
   const [copiedJson, setCopiedJson] = useState(false);
 
@@ -73,12 +71,19 @@ export default function App() {
     setError(null);
 
     try {
+      // 常に環境変数（import.meta.env.VITE_GEMINI_API_KEY）からAPIキーを読み込み
+      const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+
       const response = await fetch('/api/analyze-ad', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(apiKey ? { 'x-gemini-api-key': apiKey } : {}),
+        },
         body: JSON.stringify({
           image,
           metadata,
+          apiKey: apiKey || undefined,
         }),
       });
 
@@ -135,7 +140,6 @@ export default function App() {
     <div className="min-h-screen bg-[#08090d] text-[#e0e2ec] flex flex-col font-['Plus_Jakarta_Sans','Noto_Sans_JP',sans-serif]">
       {/* Top Header */}
       <Header
-        onOpenAiStudioModal={() => setShowAiStudioModal(true)}
         onOpenExplainerModal={() => setShowExplainerModal(true)}
         onSelectPreset={handleSelectPresetFromHeader}
       />
@@ -407,7 +411,6 @@ export default function App() {
       </footer>
 
       {/* Modals */}
-      <AiStudioModal isOpen={showAiStudioModal} onClose={() => setShowAiStudioModal(false)} />
       <ThreeSecondExplainerModal isOpen={showExplainerModal} onClose={() => setShowExplainerModal(false)} />
     </div>
   );
